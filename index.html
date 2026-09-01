@@ -43,6 +43,7 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/1.119.0/iconfont/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{max-width:100vw;overflow-x:hidden}
@@ -304,32 +305,33 @@ input::placeholder{color:var(--t3)}
 /* ═══ PRINT ═══ */
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-  @page{size:A4;margin:9mm 8mm}
+  @page{size:A4;margin:11mm 10mm}
   .hdr,.tabs,.btn,.icon-btn,.itab,.m-over,.dp,.dp-over,.loading-overlay,.toast,.scroll-hint,.print-btn-area,.no-print,#dash-alerts,.filter-pills,.srch,.inf-tabs{display:none!important}
-  html,body{height:auto!important;overflow:visible!important;font-size:9.5px!important;line-height:1.25!important;background:#fff!important}
+  html,body{height:auto!important;overflow:visible!important;font-size:11px!important;line-height:1.4!important;background:#fff!important}
   .shell{height:auto!important;overflow:visible!important;display:block!important}
   .content{height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important}
-  .card,.mc,.cc{box-shadow:none!important;border:1px solid #999!important;break-inside:avoid;background:#fff!important;margin-bottom:6px!important}
-  .card-title{color:#333!important;font-size:9px!important;margin-bottom:4px!important}
-  .cp{padding:7px 9px!important}
-  .metrics{grid-template-columns:repeat(4,1fr)!important;gap:5px!important;margin-bottom:6px!important}
-  .mc{padding:6px 8px!important}
-  .mc-l{font-size:7.5px!important;margin-bottom:1px!important}
-  .mc-v{font-size:14px!important}
-  .mc-sub{font-size:7.5px!important}
-  .two{gap:6px!important;margin-bottom:6px!important;align-items:start!important}
+  .card,.mc,.cc{box-shadow:none!important;border:1px solid #999!important;break-inside:avoid;background:#fff!important;margin-bottom:10px!important}
+  .card-title{color:#333!important;font-size:10.5px!important;margin-bottom:8px!important}
+  .cp{padding:11px 14px!important}
+  .metrics{grid-template-columns:repeat(4,1fr)!important;gap:8px!important;margin-bottom:10px!important}
+  .mc{padding:9px 11px!important}
+  .mc-l{font-size:8.5px!important;margin-bottom:3px!important}
+  .mc-v{font-size:18px!important}
+  .mc-sub{font-size:8.5px!important}
+  .two{gap:10px!important;margin-bottom:10px!important;align-items:start!important}
   .inf-panel{display:none!important}
   .inf-panel.print-active{display:block!important}
   .vw{display:none!important}.vw.on{display:block!important}
   .print-header{display:block!important}
 
-  /* Compacta las filas de "Ingresos por actividad" / "Gastos por categoría" y cuotas */
-  .card [style*="margin-bottom:11px"],.card [style*="margin-bottom:14px"]{margin-bottom:5px!important}
-  .prog{height:5px!important;margin-top:2px!important}
+  /* Filas de "Ingresos por actividad" / "Gastos por categoría" y cuotas: un poco más
+     compactas que en pantalla, sin apretarlas demasiado */
+  .card [style*="margin-bottom:11px"],.card [style*="margin-bottom:14px"]{margin-bottom:8px!important}
+  .prog{height:7px!important;margin-top:3px!important}
 
   /* Tablas cuadradas y legibles, con o sin color */
-  table{width:100%!important;font-size:8.5px!important;border-collapse:collapse!important}
-  .tbl th,.tbl td,.mtbl th,.mtbl td{border:.75pt solid #bbb!important;padding:3px 6px!important}
+  table{width:100%!important;font-size:10px!important;border-collapse:collapse!important}
+  .tbl th,.tbl td,.mtbl th,.mtbl td{border:.75pt solid #bbb!important;padding:5px 8px!important}
   .tbl th{background:#d8ebe4!important;color:#111!important}
   .mtbl th{background:#eee!important;color:#111!important}
   .tbl tbody tr:nth-child(even) td,.mtbl tbody tr:nth-child(even) td{background:#f5f5f2!important}
@@ -337,7 +339,7 @@ input::placeholder{color:var(--t3)}
   tr{break-inside:avoid}
 
   /* Badges con borde para que se distingan aunque la impresora sea B/N */
-  .badge{border:.75pt solid currentColor!important;font-weight:700!important;font-size:8px!important;padding:1px 5px!important}
+  .badge{border:.75pt solid currentColor!important;font-weight:700!important;font-size:9.5px!important;padding:2px 7px!important}
 
   a[href]{color:inherit!important;text-decoration:none!important}
 }
@@ -540,6 +542,7 @@ input::placeholder{color:var(--t3)}
       <button class="btn primary btn-sm" onclick="openModal('pago')"><i class="ti ti-plus"></i>Nuevo pago</button>
     </div>
     <div class="card">
+      <div class="mwrap">
       <table class="tbl">
         <thead><tr>
           <th>Alumno</th><th>Concepto</th><th class="hide-m">Mes</th>
@@ -547,6 +550,7 @@ input::placeholder{color:var(--t3)}
         </tr></thead>
         <tbody id="pagos-body"></tbody>
       </table>
+      </div>
     </div>
   </div>
 
@@ -557,6 +561,7 @@ input::placeholder{color:var(--t3)}
       <button class="btn primary btn-sm" onclick="openModal('gasto')"><i class="ti ti-plus"></i>Nuevo gasto</button>
     </div>
     <div class="card">
+      <div class="mwrap">
       <table class="tbl">
         <thead><tr>
           <th>Concepto</th><th class="hide-m">Detalle</th><th class="hide-m">Proveedor</th>
@@ -564,6 +569,7 @@ input::placeholder{color:var(--t3)}
         </tr></thead>
         <tbody id="gastos-body"></tbody>
       </table>
+      </div>
     </div>
   </div>
 
@@ -571,7 +577,10 @@ input::placeholder{color:var(--t3)}
   <div id="v-informes" class="vw">
    <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <p style="font-size:13px;color:var(--t2)">Reportes del curso · 2026</p>
-      <button class="btn btn-sm print-btn-area" onclick="imprimirInforme()"><i class="ti ti-printer"></i>Imprimir este informe</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm print-btn-area" onclick="descargarInformeJPG()"><i class="ti ti-photo-download"></i>Descargar JPG</button>
+        <button class="btn btn-sm print-btn-area" onclick="imprimirInforme()"><i class="ti ti-printer"></i>Imprimir / PDF</button>
+      </div>
     </div>
     <div class="inf-tabs">
       <button class="itab on" onclick="showInfTab('resumen')"><i class="ti ti-chart-pie" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Resumen</button>
@@ -1656,6 +1665,34 @@ function imprimirInforme(){
   window.print();
 }
 
+const NOMBRES_INFORME={resumen:'Resumen General',concepto:'Por Concepto',pendientes:'Pagos Pendientes',ranking:'Ranking de Pagos'};
+async function descargarInformeJPG(){
+  if(typeof html2canvas==='undefined'){toast('No se pudo cargar el generador de imágenes (revisa tu conexión)','err');return;}
+  const panel=document.querySelector('.inf-panel.print-active');
+  if(!panel){toast('No hay informe activo','err');return;}
+  showLoader(true);
+  const header=document.createElement('div');
+  header.style.cssText='font-size:17px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #333;color:#18181a;background:#fff;font-family:inherit';
+  header.innerHTML=`🎓 Tesorería 2° Básico A · 2026 &nbsp;·&nbsp; <span style="color:#1D9E75">${NOMBRES_INFORME[currentInfTab]||currentInfTab}</span><br>
+    <span style="font-size:11px;font-weight:400;color:#777">Generado el ${new Date().toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'})}</span>`;
+  panel.insertBefore(header,panel.firstChild);
+  panel.style.background='#fff';
+  try{
+    const canvas=await html2canvas(panel,{backgroundColor:'#ffffff',scale:2,useCORS:true});
+    const link=document.createElement('a');
+    link.download=`tesoreria_${currentInfTab}_${today()}.jpg`;
+    link.href=canvas.toDataURL('image/jpeg',0.92);
+    link.click();
+    toast('Imagen descargada','ok');
+  }catch(err){
+    toast('Error al generar imagen: '+err.message,'err');
+  }finally{
+    header.remove();
+    panel.style.background='';
+    showLoader(false);
+  }
+}
+
 // Monto total que "debería" pagar un alumno si paga todo (cuotas mensuales x10 + pagos unicos).
 // Los conceptos "free" (libres) no entran porque no tienen un monto exigible fijo.
 function montoEsperadoPorAlumno(){
@@ -1823,7 +1860,7 @@ function renderInfPendientes(){
               <button class="btn sm" onclick="copyWAConcepto('${c.id}')"><i class="ti ti-brand-whatsapp" style="color:#25D366"></i>WhatsApp</button>
             </div>
           </div>
-          <table class="tbl">
+          <div class="mwrap"><table class="tbl">
             <thead><tr><th>Alumno</th><th>Meses pendientes</th><th>Pagados</th></tr></thead>
             <tbody>${pending.map(({s,months})=>`<tr>
               <td><span style="font-weight:500">${s.a}</span>, <span style="color:var(--t2)">${s.n}</span></td>
@@ -1833,7 +1870,7 @@ function renderInfPendientes(){
               }).join('')}</td>
               <td><span class="badge ${(10-months.length)===10?'b-ok':(10-months.length)>0?'b-info':'b-no'}">${10-months.length}/10</span></td>
             </tr>`).join('')}</tbody>
-          </table>
+          </table></div>
         </div>`;
       }
     } else if(c.type==='once'){
@@ -1875,6 +1912,7 @@ function renderInfRanking(){
   document.getElementById('inf-ranking').innerHTML=`
     <div class="alert info" style="margin-bottom:14px"><i class="ti ti-lock"></i>Este informe muestra datos individuales de alumnos — es confidencial, no lo compartas en el informe general.</div>
     <div class="card" style="overflow:hidden">
+    <div class="mwrap">
     <table class="tbl">
       <thead><tr><th>#</th><th>Alumno</th><th class="hide-m">Conceptos pagados</th><th>Total pagado</th><th style="min-width:140px">% Cumplimiento</th><th>Estado</th></tr></thead>
       <tbody>${rows.map((r,i)=>`<tr>
@@ -1893,6 +1931,7 @@ function renderInfRanking(){
       </tr>`).join('')}
       </tbody>
     </table>
+    </div>
   </div>`;
 }
 
