@@ -233,6 +233,14 @@ input::placeholder{color:var(--t3)}
 
 /* Toast */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--t1);color:var(--bg);padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:300;white-space:nowrap;pointer-events:none}
+
+/* Aviso "abrir en Chrome" cuando el link se abre dentro de WhatsApp/Instagram/Facebook */
+#inapp-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:1000;background:#202124;color:#fff;padding:10px 14px;font-size:12.5px;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+#inapp-banner.on{display:flex}
+#inapp-banner span{flex:1;line-height:1.35}
+#inapp-banner button{flex-shrink:0;background:#fff;color:#202124;border:none;border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px}
+#inapp-banner .ib-x{background:transparent;color:#aaa;border:none;font-size:18px;padding:4px;cursor:pointer;line-height:1}
+@media(max-width:640px){#inapp-banner{font-size:11.5px}}
 .toast.ok{background:var(--teal)}.toast.err{background:var(--red)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -306,7 +314,7 @@ input::placeholder{color:var(--t3)}
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   @page{size:A4;margin:11mm 10mm}
-  .hdr,.tabs,.btn,.icon-btn,.itab,.m-over,.dp,.dp-over,.loading-overlay,.toast,.scroll-hint,.print-btn-area,.no-print,#dash-alerts,.filter-pills,.srch,.inf-tabs{display:none!important}
+  .hdr,.tabs,.btn,.icon-btn,.itab,.m-over,.dp,.dp-over,.loading-overlay,.toast,.scroll-hint,.print-btn-area,.no-print,#dash-alerts,.filter-pills,.srch,.inf-tabs,#inapp-banner{display:none!important}
   html,body{height:auto!important;overflow:visible!important;font-size:11px!important;line-height:1.4!important;background:#fff!important}
   .shell{height:auto!important;overflow:visible!important;display:block!important}
   .content{height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important}
@@ -347,6 +355,12 @@ input::placeholder{color:var(--t3)}
 </style>
 </head>
 <body>
+<!-- ═══ AVISO: ABRIR EN CHROME (si se abrió dentro de WhatsApp/Instagram/Facebook) ═══ -->
+<div id="inapp-banner">
+  <span id="inapp-banner-msg"></span>
+  <button id="inapp-banner-btn" onclick="abrirEnChrome()"><i class="ti ti-brand-chrome"></i>Abrir en Chrome</button>
+  <button class="ib-x" onclick="document.getElementById('inapp-banner').classList.remove('on')" aria-label="Cerrar">×</button>
+</div>
 <!-- ═══ LOGIN SCREEN ═══ -->
 <div id="login-screen" class="login-wrap">
   <div class="login-bg"></div>
@@ -3041,6 +3055,44 @@ function doLogout(){
   document.getElementById('login-err').classList.remove('on');
 }
 
+// ══════════════════════════════════════════════
+//  DETECCIÓN DE NAVEGADOR EMBEBIDO (WhatsApp/Instagram/Facebook/etc.)
+//  Estas apps abren los links en su propio navegador interno, no en
+//  Chrome — no lo controla el sitio, es la app la que decide. Lo único
+//  que se puede hacer es avisar y ofrecer un atajo para abrir en Chrome.
+// ══════════════════════════════════════════════
+function detectarNavegadorEmbebido(){
+  const ua=navigator.userAgent||'';
+  const esAndroid=/Android/i.test(ua);
+  const esIOS=/iPhone|iPad|iPod/i.test(ua);
+  let app=null;
+  if(/Instagram/i.test(ua))app='Instagram';
+  else if(/FBAN|FBAV|FB_IAB/i.test(ua))app='Facebook';
+  else if(/\bLine\//i.test(ua))app='Line';
+  else if(/Twitter/i.test(ua))app='Twitter/X';
+  else if(esAndroid&&/wv\)/i.test(ua))app='una app'; // WebView genérico de Android (WhatsApp incluido)
+  if(!app)return;
+  const banner=document.getElementById('inapp-banner');
+  const msg=document.getElementById('inapp-banner-msg');
+  const btn=document.getElementById('inapp-banner-btn');
+  if(!banner)return;
+  if(esAndroid){
+    msg.textContent=`Estás viendo esto dentro de ${app}. Para instalarla como app o guardar el PDF/JPG bien, ábrela en Chrome.`;
+    btn.style.display='flex';
+  } else if(esIOS){
+    msg.textContent=`Estás viendo esto dentro de ${app}. Toca el botón ⋯ o de compartir y elige "Abrir en Safari" o "Abrir en Chrome".`;
+    btn.style.display='none';
+  } else {
+    msg.textContent=`Estás viendo esto dentro de ${app}. Para mejor experiencia, ábrelo en tu navegador normal.`;
+    btn.style.display='none';
+  }
+  banner.classList.add('on');
+}
+function abrirEnChrome(){
+  const url=location.href.replace(/^https?:\/\//,'');
+  // Intent de Android: fuerza que la URL se abra en Chrome específicamente
+  location.href='intent://'+url+'#Intent;scheme=https;package=com.android.chrome;end';
+}
 function checkSession(){
   // ⚠️ SEGURIDAD: limpiar SIEMPRE cualquier sesión de localStorage
   // (puede quedar de versiones anteriores del código)
@@ -3382,6 +3434,7 @@ document.querySelectorAll('.tab[data-view]').forEach(el=>{
   el.addEventListener('click',()=>showView(el.dataset.view));
 });
 checkSession();
+detectarNavegadorEmbebido();
 </script>
 </body>
 </html>
