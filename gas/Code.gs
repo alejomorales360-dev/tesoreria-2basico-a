@@ -259,7 +259,14 @@ function loginApoderado(rutIngresado){
     const conceptos=hojaAObjetos(HOJAS.CONCEPTOS).map(c=>({
       id:String(c.id),nombre:String(c.nombre),tipo:String(c.tipo),monto:parseFloat(c.monto)||0
     }));
-    return{ok:true,alumno:al,pagos,conceptos,config:obtenerConfig()};
+    // Gastos del curso: no son por alumno, se muestran igual a todos los
+    // apoderados por transparencia (en qué se gastó la plata del curso)
+    const gastos=hojaAObjetos(HOJAS.GASTOS).map(g=>({
+      id:String(g.id),concepto:String(g.concepto),detalle:String(g.detalle||''),
+      proveedor:String(g.proveedor||''),monto:parseFloat(g.monto)||0,
+      fecha:String(g.fecha||''),nota:String(g.nota||'')
+    }));
+    return{ok:true,alumno:al,pagos,conceptos,gastos,config:obtenerConfig()};
   }catch(err){return{ok:false,error:'Error: '+err.message};}
 }
 
