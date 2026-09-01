@@ -323,7 +323,10 @@ input::placeholder{color:var(--t3)}
   @page{size:A4;margin:11mm 10mm}
   .hdr,.tabs,.btn,.icon-btn,.itab,.m-over,.dp,.dp-over,.loading-overlay,.toast,.scroll-hint,.print-btn-area,.no-print,#dash-alerts,.filter-pills,.srch,.inf-tabs,#inapp-banner,#install-banner{display:none!important}
   html,body{height:auto!important;overflow:visible!important;font-size:11px!important;line-height:1.4!important;background:#fff!important}
-  .shell{height:auto!important;overflow:visible!important;display:block!important}
+  /* OJO: no forzar display aquí — #app tiene display:none inline cuando
+     se está viendo la Vista Apoderado, y forzarlo hacía "aparecer" el
+     dashboard del modo Tesorero (vacío) detrás del informe que se imprime */
+  .shell{height:auto!important;overflow:visible!important}
   .content{height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important}
   .card,.mc,.cc{box-shadow:none!important;border:1px solid #999!important;break-inside:avoid;background:#fff!important;margin-bottom:10px!important}
   .card-title{color:#333!important;font-size:10.5px!important;margin-bottom:8px!important}
@@ -470,11 +473,11 @@ input::placeholder{color:var(--t3)}
         </div>
       </div>
       <div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-        <button onclick="descargarEstadoPagoJPG()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;font-family:inherit;display:flex;align-items:center;gap:5px">
-          <i class="ti ti-photo-download" style="font-size:15px"></i><span class="hide-m">JPG</span>
+        <button onclick="descargarEstadoPagoJPG()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap">
+          <i class="ti ti-photo-download" style="font-size:15px;flex-shrink:0"></i>JPG
         </button>
-        <button onclick="imprimirEstadoPago()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;font-family:inherit;display:flex;align-items:center;gap:5px">
-          <i class="ti ti-printer" style="font-size:15px"></i><span class="hide-m">Imprimir/PDF</span>
+        <button onclick="imprimirEstadoPago()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12.5px;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap">
+          <i class="ti ti-printer" style="font-size:15px;flex-shrink:0"></i>PDF
         </button>
         <button onclick="closeParentView()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;display:flex;align-items:center;gap:5px">
           <i class="ti ti-arrow-left" style="font-size:15px"></i>Volver
