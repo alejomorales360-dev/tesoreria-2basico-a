@@ -1692,6 +1692,23 @@ function renderResumenAlumnosTable(){
     </table>
   </div>`;
 }
+function renderCoberturaCobro(){
+  const esperado=montoEsperadoPorAlumno()*students.length;
+  const recaudadoExigible=payments.filter(p=>{const c=getC(p.conceptId);return c&&(c.type==='monthly'||c.type==='once');}).reduce((s,p)=>s+p.amount,0);
+  const falta=Math.max(esperado-recaudadoExigible,0);
+  const pct=esperado>0?Math.round(recaudadoExigible/esperado*100):0;
+  return`<div class="card cp" style="margin-bottom:14px">
+    <div class="card-title"><i class="ti ti-chart-donut"></i>Cobertura de cobro · cuotas y pagos únicos</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:12px">
+      <div><div style="font-size:11px;color:var(--t2)">TOTAL ESPERADO</div><div style="font-size:20px;font-weight:700">${fmt(esperado)}</div></div>
+      <div><div style="font-size:11px;color:var(--t2)">RECAUDADO</div><div style="font-size:20px;font-weight:700;color:var(--teal)">${fmt(recaudadoExigible)}</div></div>
+      <div><div style="font-size:11px;color:var(--t2)">FALTA POR COBRAR</div><div style="font-size:20px;font-weight:700;color:${falta>0?'var(--amber)':'var(--teal)'}">${fmt(falta)}</div></div>
+      <div><div style="font-size:11px;color:var(--t2)">% RECAUDADO</div><div style="font-size:20px;font-weight:700">${pct}%</div></div>
+    </div>
+    <div class="prog" style="height:12px"><div class="prog-f" style="width:${Math.min(pct,100)}%;background:${pct>=100?'var(--teal)':pct>=50?'var(--blue)':'var(--amber)'}"></div></div>
+    <p style="font-size:10px;color:var(--t3);margin-top:6px">No incluye conceptos "libres" (sin monto fijo exigible)</p>
+  </div>`;
+}
 function renderInfResumen(){
   const inc=totalInc(),exp=totalExp(),bal=getSaldo2025()+inc-exp;
   const byC={};payments.forEach(p=>{const k=getC(p.conceptId)?.name||p.conceptId;byC[k]=(byC[k]||0)+p.amount;});
@@ -1708,6 +1725,7 @@ function renderInfResumen(){
       <div class="mc"><div class="mc-l">Gastos 2026</div><div class="mc-v amber">${fmt(exp)}</div></div>
       <div class="mc"><div class="mc-l">Arrastre 2025</div><div class="mc-v">${fmt(getSaldo2025())}</div></div>
     </div>
+    ${renderCoberturaCobro()}
     <div class="two">
       <div class="card cp">
         <div class="card-title"><i class="ti ti-trending-up"></i>Ingresos por actividad</div>
