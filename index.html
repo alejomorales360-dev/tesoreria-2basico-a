@@ -344,6 +344,11 @@ input::placeholder{color:var(--t3)}
   .mtbl th{background:#eee!important;color:#111!important}
   .tbl tbody tr:nth-child(even) td,.mtbl tbody tr:nth-child(even) td{background:#f5f5f2!important}
   thead{display:table-header-group}
+  /* Los wrappers con scroll horizontal (para el celular) no deben recortar
+     la tabla al imprimir: que se vea completa, achicando la letra si hace falta */
+  .mwrap{overflow:visible!important}
+  .mtbl{font-size:7.5px!important}
+  .mtbl th,.mtbl td{padding:2px 3px!important}
   tr{break-inside:avoid}
 
   /* Badges con borde para que se distingan aunque la impresora sea B/N */
@@ -2316,6 +2321,15 @@ if(missing.length>0){
     const duplicados=selectedMonths.filter(m=>paidSet.has(m));
     if(duplicados.length>0){
       alert(`❌ ${duplicados.map(m=>MONTH_NAMES[m]).join(', ')} ya ${duplicados.length===1?'está pagado':'están pagados'}.\nNo se puede duplicar un pago.`);
+      return;
+    }
+  }
+
+  // Validación: duplicados para conceptos de pago único (once)
+  if(c?.type==='once'){
+    const yaPagado=payments.some(p=>p.studentId===sid&&p.conceptId===cid&&p.id!==editingPagoId);
+    if(yaPagado){
+      alert(`❌ ${s?`${s.n} ${s.a}`:'Este alumno'} ya tiene un pago registrado para "${c.name}".\nSi fue un error, edita o elimina el pago existente en vez de crear uno nuevo.`);
       return;
     }
   }
