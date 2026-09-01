@@ -305,36 +305,40 @@ input::placeholder{color:var(--t3)}
 /* ═══ PRINT ═══ */
 @media print{
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-  @page{size:A4;margin:14mm 11mm}
-  .hdr,.tabs,.btn,.icon-btn,.itab,.m-over,.dp,.dp-over,.loading-overlay,.toast,.scroll-hint,.print-btn-area,#dash-alerts,.filter-pills,.srch,.inf-tabs{display:none!important}
-  html,body{height:auto!important;overflow:visible!important;font-size:11px;background:#fff!important}
+  @page{size:A4;margin:9mm 8mm}
+  .hdr,.tabs,.btn,.icon-btn,.itab,.m-over,.dp,.dp-over,.loading-overlay,.toast,.scroll-hint,.print-btn-area,.no-print,#dash-alerts,.filter-pills,.srch,.inf-tabs{display:none!important}
+  html,body{height:auto!important;overflow:visible!important;font-size:9.5px!important;line-height:1.25!important;background:#fff!important}
   .shell{height:auto!important;overflow:visible!important;display:block!important}
   .content{height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important}
-  .card,.mc,.cc{box-shadow:none!important;border:1px solid #999!important;break-inside:avoid;background:#fff!important}
-  .card-title{color:#333!important}
-  .metrics{grid-template-columns:repeat(4,1fr)!important;gap:8px!important}
-  .two{gap:10px!important}
+  .card,.mc,.cc{box-shadow:none!important;border:1px solid #999!important;break-inside:avoid;background:#fff!important;margin-bottom:6px!important}
+  .card-title{color:#333!important;font-size:9px!important;margin-bottom:4px!important}
+  .cp{padding:7px 9px!important}
+  .metrics{grid-template-columns:repeat(4,1fr)!important;gap:5px!important;margin-bottom:6px!important}
+  .mc{padding:6px 8px!important}
+  .mc-l{font-size:7.5px!important;margin-bottom:1px!important}
+  .mc-v{font-size:14px!important}
+  .mc-sub{font-size:7.5px!important}
+  .two{gap:6px!important;margin-bottom:6px!important;align-items:start!important}
   .inf-panel{display:none!important}
   .inf-panel.print-active{display:block!important}
   .vw{display:none!important}.vw.on{display:block!important}
   .print-header{display:block!important}
 
+  /* Compacta las filas de "Ingresos por actividad" / "Gastos por categoría" y cuotas */
+  .card [style*="margin-bottom:11px"],.card [style*="margin-bottom:14px"]{margin-bottom:5px!important}
+  .prog{height:5px!important;margin-top:2px!important}
+
   /* Tablas cuadradas y legibles, con o sin color */
-  table{width:100%!important;font-size:10px!important;border-collapse:collapse!important}
-  .tbl th,.tbl td,.mtbl th,.mtbl td{border:.75pt solid #bbb!important}
+  table{width:100%!important;font-size:8.5px!important;border-collapse:collapse!important}
+  .tbl th,.tbl td,.mtbl th,.mtbl td{border:.75pt solid #bbb!important;padding:3px 6px!important}
   .tbl th{background:#d8ebe4!important;color:#111!important}
   .mtbl th{background:#eee!important;color:#111!important}
   .tbl tbody tr:nth-child(even) td,.mtbl tbody tr:nth-child(even) td{background:#f5f5f2!important}
   thead{display:table-header-group}
   tr{break-inside:avoid}
 
-  /* Barras de progreso: se ven bien a color, y si sale en blanco y negro
-     el % en texto (que siempre acompaña a la barra) sigue siendo legible */
-  .prog{border:.75pt solid #bbb!important;background:#eee!important}
-  .prog-f{background-image:none!important}
-
   /* Badges con borde para que se distingan aunque la impresora sea B/N */
-  .badge{border:.75pt solid currentColor!important;font-weight:700!important}
+  .badge{border:.75pt solid currentColor!important;font-weight:700!important;font-size:8px!important;padding:1px 5px!important}
 
   a[href]{color:inherit!important;text-decoration:none!important}
 }
@@ -566,7 +570,7 @@ input::placeholder{color:var(--t3)}
 
   <!-- INFORMES -->
   <div id="v-informes" class="vw">
-   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+   <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <p style="font-size:13px;color:var(--t2)">Reportes del curso · 2026</p>
       <button class="btn btn-sm print-btn-area" onclick="imprimirInforme()"><i class="ti ti-printer"></i>Imprimir este informe</button>
     </div>
@@ -576,7 +580,7 @@ input::placeholder{color:var(--t3)}
       <button class="itab" onclick="showInfTab('pendientes')"><i class="ti ti-alert-circle" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Pendientes</button>
       <button class="itab" onclick="showInfTab('ranking')"><i class="ti ti-trophy" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Ranking</button>
     </div>
-    <div class="print-header" id="print-header-title" style="font-size:16px;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #333">
+    <div class="print-header" id="print-header-title" style="font-size:13px;font-weight:700;margin-bottom:6px;padding-bottom:4px;border-bottom:1.5px solid #333">
       🎓 Tesorería 2° Básico A · 2026
     </div>
     <div id="inf-resumen" class="inf-panel print-active"></div>
@@ -1648,8 +1652,8 @@ function showInfTab(tab){
 function imprimirInforme(){
   const nombres={resumen:'Resumen General',concepto:'Por Concepto',pendientes:'Pagos Pendientes',ranking:'Ranking de Pagos'};
   document.getElementById('print-header-title').innerHTML=
-    `🎓 Tesorería 2° Básico A · 2026 &nbsp;·&nbsp; <span style="color:#1D9E75">${nombres[currentInfTab]||currentInfTab}</span><br>
-     <span style="font-size:12px;font-weight:400;color:#555">Impreso el ${new Date().toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'})}</span>`;
+    `🎓 Tesorería 2° Básico A · 2026 &nbsp;·&nbsp; <span style="color:#1D9E75">${nombres[currentInfTab]||currentInfTab}</span>
+     &nbsp;&nbsp;<span style="font-size:9px;font-weight:400;color:#777">· ${new Date().toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'})}</span>`;
   window.print();
 }
 
