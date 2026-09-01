@@ -1662,36 +1662,6 @@ function montoEsperadoPorAlumno(){
     return tot;
   },0);
 }
-function renderResumenAlumnosTable(){
-  const esperado=montoEsperadoPorAlumno();
-  const rows=students.map(s=>{
-    const total=stuTotal(s.id);
-    const pct=esperado>0?Math.round(total/esperado*100):0;
-    return{s,total,pct};
-  }).sort((a,b)=>b.pct-a.pct);
-  const badge=pct=>pct>=100?'b-ok':pct>=50?'b-info':pct>0?'b-pend':'b-red';
-  const barColor=pct=>pct>=100?'var(--teal)':pct>=50?'var(--blue)':pct>0?'var(--amber)':'var(--red)';
-  return`<div class="card" style="overflow:hidden;margin-bottom:14px">
-    <div class="cp" style="padding-bottom:0">
-      <div class="card-title"><i class="ti ti-percentage"></i>Resumen por alumno · % de cumplimiento</div>
-      <p style="font-size:11px;color:var(--t3);margin:-6px 0 12px">% = total pagado ÷ ${fmt(esperado)} (cuotas mensuales + pagos únicos esperados por alumno)</p>
-    </div>
-    <table class="tbl">
-      <thead><tr><th>#</th><th>Alumno</th><th>Total pagado</th><th style="min-width:140px">% Cumplimiento</th><th>Estado</th></tr></thead>
-      <tbody>${rows.map((r,i)=>`<tr>
-        <td style="color:var(--t3)">${i+1}</td>
-        <td><span style="font-weight:500">${r.s.a}</span>, <span style="color:var(--t2)">${r.s.n}</span></td>
-        <td style="font-weight:600">${fmt(r.total)}</td>
-        <td><div style="display:flex;align-items:center;gap:8px">
-          <div class="prog" style="flex:1;min-width:60px"><div class="prog-f" style="width:${Math.min(r.pct,100)}%;background:${barColor(r.pct)}"></div></div>
-          <span style="font-weight:700;font-size:12px;min-width:34px;text-align:right">${r.pct}%</span>
-        </div></td>
-        <td><span class="badge ${badge(r.pct)}">${r.pct>=100?'Al día':r.pct>=50?'Parcial':r.pct>0?'Bajo':'Sin pagos'}</span></td>
-      </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>`;
-}
 function renderCoberturaCobro(){
   const esperado=montoEsperadoPorAlumno()*students.length;
   const recaudadoExigible=payments.filter(p=>{const c=getC(p.conceptId);return c&&(c.type==='monthly'||c.type==='once');}).reduce((s,p)=>s+p.amount,0);
@@ -1760,8 +1730,7 @@ function renderInfResumen(){
           </div>
           <div class="prog"><div class="prog-f" style="width:${pct}%;background:${pct>=80?'var(--teal)':pct>=40?'var(--blue)':'var(--amber)'}"></div></div>
         </div>`;}).join('')}
-    </div>`:''}
-    ${renderResumenAlumnosTable()}`;
+    </div>`:''}`;
 }
 
 function renderInfConcepto(){
@@ -1892,14 +1861,19 @@ function renderInfPendientes(){
 }
 
 function renderInfRanking(){
+  const esperado=montoEsperadoPorAlumno();
   const rows=[...students].map(s=>{
     const sp=stuPays(s.id),tot=stuTotal(s.id),cids=new Set(sp.map(p=>p.conceptId));
-    return{s,tot,count:sp.length,cids};
-  }).sort((a,b)=>b.tot-a.tot);
-  const maxT=rows[0]?.tot||1;
-  document.getElementById('inf-ranking').innerHTML=`<div class="card" style="overflow:hidden">
+    const pct=esperado>0?Math.round(tot/esperado*100):0;
+    return{s,tot,pct,count:sp.length,cids};
+  }).sort((a,b)=>b.pct-a.pct);
+  const badge=pct=>pct>=100?'b-ok':pct>=50?'b-info':pct>0?'b-pend':'b-red';
+  const barColor=pct=>pct>=100?'var(--teal)':pct>=50?'var(--blue)':pct>0?'var(--amber)':'var(--red)';
+  document.getElementById('inf-ranking').innerHTML=`
+    <div class="alert info" style="margin-bottom:14px"><i class="ti ti-lock"></i>Este informe muestra datos individuales de alumnos — es confidencial, no lo compartas en el informe general.</div>
+    <div class="card" style="overflow:hidden">
     <table class="tbl">
-      <thead><tr><th>#</th><th>Alumno</th><th class="hide-m">Conceptos pagados</th><th>Total</th></tr></thead>
+      <thead><tr><th>#</th><th>Alumno</th><th class="hide-m">Conceptos pagados</th><th>Total pagado</th><th style="min-width:140px">% Cumplimiento</th><th>Estado</th></tr></thead>
       <tbody>${rows.map((r,i)=>`<tr>
         <td style="color:${i<3?'var(--amber)':'var(--t3)'};font-weight:700;font-size:${i<3?'16':'13'}px">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
         <td><div style="display:flex;align-items:center;gap:8px">
@@ -1907,10 +1881,12 @@ function renderInfRanking(){
           <div><div style="font-weight:500;font-size:12px">${r.s.a}</div><div style="font-size:11px;color:var(--t2)">${r.s.n}</div></div>
         </div></td>
         <td class="hide-m" style="font-size:11px">${[...r.cids].map(cid=>`<span class="badge b-info" style="margin:1px">${getC(cid)?.name||cid}</span>`).join('')||'—'}</td>
+        <td style="font-weight:600">${r.tot>0?fmt(r.tot):'—'}</td>
         <td><div style="display:flex;align-items:center;gap:8px">
-          <div class="prog" style="flex:1;min-width:50px"><div class="prog-f" style="width:${Math.round(r.tot/maxT*100)}%;background:var(--teal)"></div></div>
-          <span style="font-weight:700;color:${r.tot>0?'var(--teal)':'var(--t3)'};font-size:12px;flex-shrink:0">${r.tot>0?fmt(r.tot):'—'}</span>
+          <div class="prog" style="flex:1;min-width:60px"><div class="prog-f" style="width:${Math.min(r.pct,100)}%;background:${barColor(r.pct)}"></div></div>
+          <span style="font-weight:700;font-size:12px;min-width:34px;text-align:right">${r.pct}%</span>
         </div></td>
+        <td><span class="badge ${badge(r.pct)}">${r.pct>=100?'Al día':r.pct>=50?'Parcial':r.pct>0?'Bajo':'Sin pagos'}</span></td>
       </tr>`).join('')}
       </tbody>
     </table>
