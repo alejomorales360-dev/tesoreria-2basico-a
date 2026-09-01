@@ -152,6 +152,7 @@ input::placeholder{color:var(--t3)}
 .tbl th{font-size:11px;font-weight:700;color:#18181a;text-align:left;padding:10px 14px;border-bottom:.5px solid var(--bd);background:#d8ebe4;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .tbl td{padding:11px 14px;border-bottom:.5px solid var(--bd);vertical-align:middle}
 .tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:nth-child(even) td{background:rgba(0,0,0,.015)}
 .tbl tbody tr:hover td{background:var(--bg2)}
 .hide-m{/* hide on mobile */}
 
@@ -303,18 +304,39 @@ input::placeholder{color:var(--t3)}
 
 /* ═══ PRINT ═══ */
 @media print{
-  .hdr,.tabs,.btn,.icon-btn,.itab,.m-over,.dp,.dp-over,.loading-overlay,.toast,.scroll-hint,.print-btn-area{display:none!important}
-  html,body{height:auto!important;overflow:visible!important;font-size:11px}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  @page{size:A4;margin:14mm 11mm}
+  .hdr,.tabs,.btn,.icon-btn,.itab,.m-over,.dp,.dp-over,.loading-overlay,.toast,.scroll-hint,.print-btn-area,#dash-alerts,.filter-pills,.srch,.inf-tabs{display:none!important}
+  html,body{height:auto!important;overflow:visible!important;font-size:11px;background:#fff!important}
   .shell{height:auto!important;overflow:visible!important;display:block!important}
-  .content{height:auto!important;overflow:visible!important;padding:0!important}
-  .card,.mc{box-shadow:none!important;border:1px solid #ccc!important;break-inside:avoid}
-  .metrics{grid-template-columns:repeat(4,1fr)!important}
+  .content{height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important}
+  .card,.mc,.cc{box-shadow:none!important;border:1px solid #999!important;break-inside:avoid;background:#fff!important}
+  .card-title{color:#333!important}
+  .metrics{grid-template-columns:repeat(4,1fr)!important;gap:8px!important}
+  .two{gap:10px!important}
   .inf-panel{display:none!important}
   .inf-panel.print-active{display:block!important}
   .vw{display:none!important}.vw.on{display:block!important}
   .print-header{display:block!important}
-  table{width:100%!important;font-size:10px!important}
+
+  /* Tablas cuadradas y legibles, con o sin color */
+  table{width:100%!important;font-size:10px!important;border-collapse:collapse!important}
+  .tbl th,.tbl td,.mtbl th,.mtbl td{border:.75pt solid #bbb!important}
+  .tbl th{background:#d8ebe4!important;color:#111!important}
+  .mtbl th{background:#eee!important;color:#111!important}
+  .tbl tbody tr:nth-child(even) td,.mtbl tbody tr:nth-child(even) td{background:#f5f5f2!important}
+  thead{display:table-header-group}
   tr{break-inside:avoid}
+
+  /* Barras de progreso: se ven bien a color, y si sale en blanco y negro
+     el % en texto (que siempre acompaña a la barra) sigue siendo legible */
+  .prog{border:.75pt solid #bbb!important;background:#eee!important}
+  .prog-f{background-image:none!important}
+
+  /* Badges con borde para que se distingan aunque la impresora sea B/N */
+  .badge{border:.75pt solid currentColor!important;font-weight:700!important}
+
+  a[href]{color:inherit!important;text-decoration:none!important}
 }
 .print-header{display:none}
 </style>
@@ -1631,6 +1653,45 @@ function imprimirInforme(){
   window.print();
 }
 
+// Monto total que "debería" pagar un alumno si paga todo (cuotas mensuales x10 + pagos unicos).
+// Los conceptos "free" (libres) no entran porque no tienen un monto exigible fijo.
+function montoEsperadoPorAlumno(){
+  return concepts.reduce((tot,c)=>{
+    if(c.type==='monthly') return tot+(c.amount||0)*10;
+    if(c.type==='once') return tot+(c.amount||0);
+    return tot;
+  },0);
+}
+function renderResumenAlumnosTable(){
+  const esperado=montoEsperadoPorAlumno();
+  const rows=students.map(s=>{
+    const total=stuTotal(s.id);
+    const pct=esperado>0?Math.round(total/esperado*100):0;
+    return{s,total,pct};
+  }).sort((a,b)=>b.pct-a.pct);
+  const badge=pct=>pct>=100?'b-ok':pct>=50?'b-info':pct>0?'b-pend':'b-red';
+  const barColor=pct=>pct>=100?'var(--teal)':pct>=50?'var(--blue)':pct>0?'var(--amber)':'var(--red)';
+  return`<div class="card" style="overflow:hidden;margin-bottom:14px">
+    <div class="cp" style="padding-bottom:0">
+      <div class="card-title"><i class="ti ti-percentage"></i>Resumen por alumno · % de cumplimiento</div>
+      <p style="font-size:11px;color:var(--t3);margin:-6px 0 12px">% = total pagado ÷ ${fmt(esperado)} (cuotas mensuales + pagos únicos esperados por alumno)</p>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Alumno</th><th>Total pagado</th><th style="min-width:140px">% Cumplimiento</th><th>Estado</th></tr></thead>
+      <tbody>${rows.map((r,i)=>`<tr>
+        <td style="color:var(--t3)">${i+1}</td>
+        <td><span style="font-weight:500">${r.s.a}</span>, <span style="color:var(--t2)">${r.s.n}</span></td>
+        <td style="font-weight:600">${fmt(r.total)}</td>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="prog" style="flex:1;min-width:60px"><div class="prog-f" style="width:${Math.min(r.pct,100)}%;background:${barColor(r.pct)}"></div></div>
+          <span style="font-weight:700;font-size:12px;min-width:34px;text-align:right">${r.pct}%</span>
+        </div></td>
+        <td><span class="badge ${badge(r.pct)}">${r.pct>=100?'Al día':r.pct>=50?'Parcial':r.pct>0?'Bajo':'Sin pagos'}</span></td>
+      </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
 function renderInfResumen(){
   const inc=totalInc(),exp=totalExp(),bal=getSaldo2025()+inc-exp;
   const byC={};payments.forEach(p=>{const k=getC(p.conceptId)?.name||p.conceptId;byC[k]=(byC[k]||0)+p.amount;});
@@ -1681,7 +1742,8 @@ function renderInfResumen(){
           </div>
           <div class="prog"><div class="prog-f" style="width:${pct}%;background:${pct>=80?'var(--teal)':pct>=40?'var(--blue)':'var(--amber)'}"></div></div>
         </div>`;}).join('')}
-    </div>`:''}`;
+    </div>`:''}
+    ${renderResumenAlumnosTable()}`;
 }
 
 function renderInfConcepto(){
