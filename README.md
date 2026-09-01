@@ -17,6 +17,17 @@ https://alejomorales360-dev.github.io/tesoreria-2basico-a/
 
 Cada vez que se hace push a `main`, GitHub Pages actualiza el sitio solo.
 
+## Instalarla como app en el celular
+
+El sitio trae `manifest.json` + íconos, así que se puede "instalar":
+
+- **Android/Chrome**: abre el link → menú (⋮) → **"Agregar a pantalla de inicio" / "Instalar app"**.
+- **iPhone/Safari**: abre el link → botón de compartir → **"Agregar a pantalla de inicio"**.
+
+Así queda con ícono propio y abre a pantalla completa, sin la barra del navegador.
+El modo oscuro automático del celular está desactivado a propósito: la app
+siempre se ve clara, para que se lea bien e imprima/exporte a PDF sin problemas.
+
 ## Configurar la conexión a Google Sheets
 
 Abre `index.html` y busca la constante `GAS_URL` (dentro de la

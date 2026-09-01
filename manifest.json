@@ -1,0 +1,16 @@
+{
+  "name": "Tesorería 2° Básico A",
+  "short_name": "Tesorería 2BA",
+  "description": "Registro de pagos de cuotas y gastos del curso",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1D9E75",
+  "theme_color": "#1D9E75",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
