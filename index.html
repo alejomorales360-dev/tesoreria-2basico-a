@@ -370,8 +370,9 @@ input::placeholder{color:var(--t3)}
      igual que .mwrap, hay que soltarlo para que no recorte el contenido */
   #parent-view{position:static!important;overflow:visible!important;height:auto!important;background:#fff!important}
   #parent-view [style*="position:sticky"]{position:static!important}
-  /* El historial detallado siempre arranca en una hoja nueva */
+  /* El historial de pagos y los gastos del curso arrancan cada uno en su propia hoja nueva */
   #pv-historial{page-break-before:always!important;break-before:page!important}
+  #pv-gastos{page-break-before:always!important;break-before:page!important}
 }
 .print-header{display:none}
 </style>
@@ -3436,53 +3437,7 @@ function showParentPortal(data){
       </div>`;
     })()}
 
-    <!-- Gastos del curso (transparencia: en qué se gastó la plata de todos) -->
-    ${(() => {
-      if(!gastos.length) return '';
-      const totalG=gastos.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
-      const rows=[...gastos].sort((a,b)=>{
-        const fa=a.fecha||'', fb=b.fecha||'';
-        return fa<fb?1:fa>fb?-1:0; // más reciente primero
-      });
-      return `<div style="background:var(--bg);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--sh);border:.5px solid var(--bd)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <div style="font-size:14px;font-weight:700">Gastos del curso</div>
-          <div style="font-size:15px;font-weight:700;color:var(--amber)">${fmt(totalG)}</div>
-        </div>
-        <p style="font-size:11px;color:var(--t2);margin-bottom:12px">En qué se ha gastado la plata del curso — con boleta cuando está disponible</p>
-        <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="background:var(--bg2)">
-            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);white-space:nowrap">Fecha</th>
-            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd)">Concepto</th>
-            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd)">Proveedor</th>
-            <th style="text-align:right;padding:8px 10px;border-bottom:1px solid var(--bd)">Monto</th>
-            <th style="text-align:center;padding:8px 10px;border-bottom:1px solid var(--bd)">Boleta</th>
-          </tr></thead>
-          <tbody>${rows.map(g=>{
-            const notaRaw=String(g.nota||'');
-            const url=notaRaw.match(/https:\/\/drive\.google\.com\/[^\s|]+/)?.[0];
-            return `<tr>
-              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd);white-space:nowrap">${g.fecha||'—'}</td>
-              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd)">
-                <div style="font-weight:500">${g.concepto}</div>
-                ${g.detalle?`<div style="font-size:11px;color:var(--t2)">${g.detalle}</div>`:''}
-              </td>
-              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd)">${g.proveedor||'—'}</td>
-              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd);text-align:right;font-weight:600;color:var(--amber)">${fmt(g.monto)}</td>
-              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd);text-align:center">${url?`<a href="${url}" target="_blank" style="color:var(--blue);text-decoration:none">📎 ver</a>`:'—'}</td>
-            </tr>`;
-          }).join('')}
-          <tr style="font-weight:700;background:var(--bg2)">
-            <td colspan="3" style="padding:8px 10px">TOTAL GASTOS</td>
-            <td style="padding:8px 10px;text-align:right;color:var(--amber)">${fmt(totalG)}</td>
-            <td></td>
-          </tr>
-          </tbody>
-        </table></div>
-      </div>`;
-    })()}
-
-    <!-- Historial detallado de pagos -->
+    <!-- Historial detallado de pagos (hoja 2 al imprimir) -->
     ${(() => {
       if(!pagos.length) return '';
       const rows=[...pagos].sort((a,b)=>{
@@ -3522,6 +3477,53 @@ function showParentPortal(data){
             <td colspan="3" style="padding:8px 10px">TOTAL</td>
             <td style="padding:8px 10px;text-align:right;color:var(--teal)">${fmt(totalPaid)}</td>
             <td colspan="2"></td>
+          </tr>
+          </tbody>
+        </table></div>
+      </div>`;
+    })()}
+
+    <!-- Gastos del curso (hoja 3 en adelante al imprimir) -->
+    ${(() => {
+      if(!gastos.length) return '';
+      const totalG=gastos.reduce((s,g)=>s+(parseFloat(g.monto)||0),0);
+      const rows=[...gastos].sort((a,b)=>{
+        const fa=a.fecha||'', fb=b.fecha||'';
+        return fa<fb?1:fa>fb?-1:0; // más reciente primero
+      });
+      return `<div id="pv-gastos" style="background:var(--bg);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--sh);border:.5px solid var(--bd)">
+        <div class="print-header" style="font-size:11px;font-weight:700;color:#333;margin:0 0 10px;padding-bottom:6px;border-bottom:1.5px solid #333">🎓 Tesorería 2° Básico A · 2026 — Gastos del curso</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div style="font-size:14px;font-weight:700">Gastos del curso</div>
+          <div style="font-size:15px;font-weight:700;color:var(--amber)">${fmt(totalG)}</div>
+        </div>
+        <p style="font-size:11px;color:var(--t2);margin-bottom:12px">En qué se ha gastado la plata del curso — con boleta cuando está disponible</p>
+        <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--bg2)">
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);white-space:nowrap">Fecha</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd)">Concepto</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd)">Proveedor</th>
+            <th style="text-align:right;padding:8px 10px;border-bottom:1px solid var(--bd)">Monto</th>
+            <th style="text-align:center;padding:8px 10px;border-bottom:1px solid var(--bd)">Boleta</th>
+          </tr></thead>
+          <tbody>${rows.map(g=>{
+            const notaRaw=String(g.nota||'');
+            const url=notaRaw.match(/https:\/\/drive\.google\.com\/[^\s|]+/)?.[0];
+            return `<tr>
+              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd);white-space:nowrap">${g.fecha||'—'}</td>
+              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd)">
+                <div style="font-weight:500">${g.concepto}</div>
+                ${g.detalle?`<div style="font-size:11px;color:var(--t2)">${g.detalle}</div>`:''}
+              </td>
+              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd)">${g.proveedor||'—'}</td>
+              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd);text-align:right;font-weight:600;color:var(--amber)">${fmt(g.monto)}</td>
+              <td style="padding:7px 10px;border-bottom:.5px solid var(--bd);text-align:center">${url?`<a href="${url}" target="_blank" style="color:var(--blue);text-decoration:none">📎 ver</a>`:'—'}</td>
+            </tr>`;
+          }).join('')}
+          <tr style="font-weight:700;background:var(--bg2)">
+            <td colspan="3" style="padding:8px 10px">TOTAL GASTOS</td>
+            <td style="padding:8px 10px;text-align:right;color:var(--amber)">${fmt(totalG)}</td>
+            <td></td>
           </tr>
           </tbody>
         </table></div>
