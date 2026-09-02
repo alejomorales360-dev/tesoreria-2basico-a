@@ -75,6 +75,9 @@ function procesarAccion(body){
       ]); break;
     case 'deleteConcepto':    result=eliminarFila(HOJAS.CONCEPTOS,body.id);  break;
     case 'saveConfig':        result=actualizarConfig(body.clave,body.valor); break;
+    case 'updateContactoApoderado':
+      result=actualizarContactoApoderado(body.data.rut,body.data.apoderado,body.data.email,body.data.telefono);
+      break;
     default:                  result={error:'Accion no reconocida: '+body.action};
   }
   return {ok:true, result};
@@ -267,6 +270,36 @@ function loginApoderado(rutIngresado){
       fecha:String(g.fecha||''),nota:String(g.nota||'')
     }));
     return{ok:true,alumno:al,pagos,conceptos,gastos,config:obtenerConfig()};
+  }catch(err){return{ok:false,error:'Error: '+err.message};}
+}
+
+// Permite que el apoderado actualice sus propios datos de contacto
+// (Apoderado/Email/Telefono) desde la Vista Apoderado. Se exige el RUT
+// del alumno como validacion minima -- es el mismo dato que ya hizo
+// falta para entrar a esa vista, asi que no se puede editar el alumno
+// de otra persona sin conocer su RUT.
+function actualizarContactoApoderado(rutIngresado,apoderado,email,telefono){
+  try{
+    if(!rutIngresado)return{ok:false,error:'Falta el RUT'};
+    const rn=normalizarRut(rutIngresado);
+    const h=getHoja(HOJAS.ALUMNOS);
+    const v=h.getDataRange().getValues();
+    if(v.length<2)return{ok:false,error:'Sin datos'};
+    const cab=v[0].map(x=>normalizarStr(String(x)));
+    const idxRut=cab.indexOf('rut');
+    const idxApo=cab.indexOf('apoderado');
+    const idxEmail=cab.indexOf('email_apoderado');
+    const idxTel=cab.indexOf('telefono');
+    for(let i=1;i<v.length;i++){
+      const f=v[i];if(!f[0])continue;
+      if(normalizarRut(String(f[idxRut]||''))===rn){
+        if(idxApo>=0)h.getRange(i+1,idxApo+1).setValue(String(apoderado||''));
+        if(idxEmail>=0)h.getRange(i+1,idxEmail+1).setValue(String(email||''));
+        if(idxTel>=0)h.getRange(i+1,idxTel+1).setValue(String(telefono||''));
+        return{ok:true};
+      }
+    }
+    return{ok:false,error:'RUT no encontrado.'};
   }catch(err){return{ok:false,error:'Error: '+err.message};}
 }
 

@@ -3367,6 +3367,53 @@ async function doRUTLookup(){
   btn.innerHTML = '<i class="ti ti-search"></i>Consultar estado de pagos';
 }
 
+function renderContactoView(alumno){
+  return`<div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+    <div><span style="color:var(--t2)">Apoderado/a:</span> <strong>${alumno.apoderado||'—'}</strong></div>
+    <div><span style="color:var(--t2)">Email:</span> ${alumno.email||'—'}</div>
+    <div><span style="color:var(--t2)">Teléfono:</span> ${alumno.telefono||'—'}</div>
+  </div>`;
+}
+function toggleEditContacto(){
+  const {alumno}=currentParentData;
+  document.getElementById('pv-contacto-editbtn').style.display='none';
+  document.getElementById('pv-contacto-body').innerHTML=`
+    <div class="fg"><label class="fl">Nombre apoderado/a</label><input type="text" id="pv-c-apoderado" value="${(alumno.apoderado||'').replace(/"/g,'&quot;')}"></div>
+    <div class="fg"><label class="fl">Email</label><input type="text" id="pv-c-email" value="${(alumno.email||'').replace(/"/g,'&quot;')}"></div>
+    <div class="fg"><label class="fl">Teléfono</label><input type="text" id="pv-c-telefono" value="${(alumno.telefono||'').replace(/"/g,'&quot;')}"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn sm" onclick="cancelarEditContacto()">Cancelar</button>
+      <button class="btn primary sm" onclick="guardarContacto()"><i class="ti ti-check"></i>Guardar</button>
+    </div>`;
+}
+function cancelarEditContacto(){
+  document.getElementById('pv-contacto-editbtn').style.display='';
+  document.getElementById('pv-contacto-body').innerHTML=renderContactoView(currentParentData.alumno);
+}
+async function guardarContacto(){
+  const apoderado=document.getElementById('pv-c-apoderado').value.trim();
+  const email=document.getElementById('pv-c-email').value.trim();
+  const telefono=document.getElementById('pv-c-telefono').value.trim();
+  if(!gasOK){toast('Sin conexión — no se pudo guardar','err');return;}
+  showLoader(true);
+  try{
+    const raw=await gasPost('updateContactoApoderado',{data:{rut:currentParentData.alumno.rut,apoderado,email,telefono}});
+    const res=raw.result||raw;
+    if(res.ok){
+      currentParentData.alumno.apoderado=apoderado;
+      currentParentData.alumno.email=email;
+      currentParentData.alumno.telefono=telefono;
+      document.getElementById('pv-contacto-editbtn').style.display='';
+      document.getElementById('pv-contacto-body').innerHTML=renderContactoView(currentParentData.alumno);
+      toast('Datos de contacto actualizados ✓');
+    }else{
+      toast('Error: '+(res.error||'no se pudo guardar'),'err');
+    }
+  }catch(err){
+    toast('Error de conexión: '+err.message,'err');
+  }
+  showLoader(false);
+}
 let currentParentData=null;
 function showParentPortal(data){
   currentParentData=data;
@@ -3429,6 +3476,17 @@ function showParentPortal(data){
           <div style="font-size:10px;color:var(--t2);margin-top:2px;text-transform:uppercase;letter-spacing:.4px">Actividades</div>
         </div>
       </div>
+    </div>
+
+    <!-- Datos de contacto (editable por el apoderado) -->
+    <div id="pv-contacto-card" style="background:var(--bg);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:var(--sh);border:.5px solid var(--bd)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700">Datos de contacto</div>
+        <button class="no-print" onclick="toggleEditContacto()" id="pv-contacto-editbtn" style="background:none;border:none;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px">
+          <i class="ti ti-pencil" style="font-size:14px"></i>Editar
+        </button>
+      </div>
+      <div id="pv-contacto-body">${renderContactoView(alumno)}</div>
     </div>
 
     <!-- Cuotas mensuales -->
