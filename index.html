@@ -98,7 +98,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
 
 /* ═══ COMPONENTS ═══ */
 /* Metrics */
-.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px}
 .mc{background:var(--bg);border:.5px solid var(--bd);border-radius:var(--rl);padding:14px 16px;box-shadow:var(--sh)}
 .mc-l{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;display:flex;align-items:center;gap:4px}
 .mc-v{font-size:20px;font-weight:700}
@@ -331,7 +331,7 @@ input::placeholder{color:var(--t3)}
   .card,.mc,.cc{box-shadow:none!important;border:1px solid #999!important;break-inside:avoid;background:#fff!important;margin-bottom:10px!important}
   .card-title{color:#333!important;font-size:10.5px!important;margin-bottom:8px!important}
   .cp{padding:11px 14px!important}
-  .metrics{grid-template-columns:repeat(4,1fr)!important;gap:8px!important;margin-bottom:10px!important}
+  .metrics{grid-template-columns:repeat(5,1fr)!important;gap:8px!important;margin-bottom:10px!important}
   .mc{padding:9px 11px!important}
   .mc-l{font-size:8.5px!important;margin-bottom:3px!important}
   .mc-v{font-size:18px!important}
@@ -1237,8 +1237,13 @@ function renderView(v){
 // ══════════════════════════════════════════════
 //  DASHBOARD
 // ══════════════════════════════════════════════
+function alumnosAlDiaStats(){
+  const alDia=students.filter(s=>studentStatus(s.id)==='ok').length;
+  return{alDia,total:students.length};
+}
 function renderDashboard(){
   const inc=totalInc(),exp=totalExp(),bal=getSaldo2025()+inc-exp;
+  const{alDia,total}=alumnosAlDiaStats();
 
   // Alertas: alumnos que no han pagado este mes en cuota_men
   const now=new Date(),curMonth=now.getMonth()+1;
@@ -1262,7 +1267,11 @@ function renderDashboard(){
     <div class="mc"><div class="mc-l"><i class="ti ti-trending-down" style="font-size:12px"></i>Gastos 2026</div>
       <div class="mc-v amber">${fmt(exp)}</div><div class="mc-sub">${expenses.length} egresos</div></div>
     <div class="mc"><div class="mc-l"><i class="ti ti-piggy-bank" style="font-size:12px"></i>Arrastre 2025</div>
-      <div class="mc-v">${fmt(getSaldo2025())}</div><div class="mc-sub">Saldo año anterior</div></div>`;
+      <div class="mc-v">${fmt(getSaldo2025())}</div><div class="mc-sub">Saldo año anterior</div></div>
+    <div class="mc" style="cursor:pointer" onclick="setStudentFilter('al_dia');showView('alumnos')" title="Ver alumnos al día">
+      <div class="mc-l"><i class="ti ti-users" style="font-size:12px"></i>Alumnos al día</div>
+      <div class="mc-v teal">${alDia}<span style="font-size:13px;color:var(--t3);font-weight:500">/${total}</span></div>
+      <div class="mc-sub">${total?Math.round(alDia/total*100):0}% vigentes al día</div></div>`;
 
   const recent=[
     ...payments.map(p=>{const s=getS(p.studentId),c=getC(p.conceptId);
@@ -1780,12 +1789,14 @@ function renderInfResumen(){
 
   const monthlyConcepts=concepts.filter(c=>c.type==='monthly');
 
+  const{alDia,total:totalAlumnos}=alumnosAlDiaStats();
   document.getElementById('inf-resumen').innerHTML=`
     <div class="metrics" style="margin-bottom:16px">
       <div class="mc"><div class="mc-l">Saldo actual</div><div class="mc-v teal">${fmt(bal)}</div></div>
       <div class="mc"><div class="mc-l">Ingresos 2026</div><div class="mc-v blue">${fmt(inc)}</div></div>
       <div class="mc"><div class="mc-l">Gastos 2026</div><div class="mc-v amber">${fmt(exp)}</div></div>
       <div class="mc"><div class="mc-l">Arrastre 2025</div><div class="mc-v">${fmt(getSaldo2025())}</div></div>
+      <div class="mc"><div class="mc-l">Alumnos al día</div><div class="mc-v teal">${alDia}<span style="font-size:12px;color:var(--t3);font-weight:500">/${totalAlumnos}</span></div></div>
     </div>
     ${renderCoberturaCobro()}
     <div class="two">
