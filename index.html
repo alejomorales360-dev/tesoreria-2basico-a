@@ -552,6 +552,7 @@ input::placeholder{color:var(--t3)}
         <i class="ti ti-user-plus"></i><span>Nuevo alumno</span>
       </button>
     </div>
+    <p id="alumnos-count" style="font-size:13px;color:var(--t2);margin-bottom:12px"></p>
     <div class="filter-pills">
       <span class="pill on" data-filter="todos" onclick="setStudentFilter('todos')">Todos</span>
       <span class="pill" data-filter="al_dia" onclick="setStudentFilter('al_dia')"><i class="ti ti-check" style="font-size:11px"></i> Al día</span>
@@ -1335,6 +1336,12 @@ function renderAlumnos(){
   if(studentFilter==='al_dia') list=list.filter(s=>studentStatus(s.id)==='ok');
   else if(studentFilter==='deuda') list=list.filter(s=>studentStatus(s.id)==='pend');
   else if(studentFilter==='sin_pago') list=list.filter(s=>stuPays(s.id).length===0);
+  const countEl=document.getElementById('alumnos-count');
+  if(countEl){
+    countEl.textContent = q||studentFilter!=='todos'
+      ? `${list.length} de ${students.length} alumnos`
+      : `${students.length} alumnos`;
+  }
   const el=document.getElementById('student-grid');
   el.innerHTML=list.map(s=>{
     const p=pal(s.id),pc=stuPays(s.id).length,pt=stuTotal(s.id);
