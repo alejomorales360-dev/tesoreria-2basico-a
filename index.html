@@ -594,6 +594,14 @@ input::placeholder{color:var(--t3)}
       <p style="font-size:13px;color:var(--t2)" id="pagos-count"></p>
       <button class="btn primary btn-sm" onclick="openModal('pago')"><i class="ti ti-plus"></i>Nuevo pago</button>
     </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="srch" style="flex:1;min-width:180px;margin-bottom:0"><i class="ti ti-search si"></i>
+        <input type="text" id="pagos-search" placeholder="Buscar por alumno..." oninput="renderPagos()">
+      </div>
+      <select id="pagos-concepto-filter" onchange="renderPagos()" style="width:auto;min-width:170px">
+        <option value="">Todos los conceptos</option>
+      </select>
+    </div>
     <div class="card">
       <div class="mwrap">
       <table class="tbl">
@@ -1566,8 +1574,26 @@ async function toggleCell(sid,cid,month){
 //  PAGOS / GASTOS
 // ══════════════════════════════════════════════
 function renderPagos(){
-  const sorted=[...payments].sort((a,b)=>b.date.localeCompare(a.date));
-  document.getElementById('pagos-count').textContent=sorted.length+' pagos registrados · '+fmt(totalInc())+' total';
+  // Selector de conceptos: se reconstruye pero conserva la selección actual
+  const conSel=document.getElementById('pagos-concepto-filter');
+  if(conSel){
+    const prevVal=conSel.value;
+    conSel.innerHTML='<option value="">Todos los conceptos</option>'+
+      concepts.map(c=>`<option value="${c.id}"${c.id===prevVal?' selected':''}>${c.name}</option>`).join('');
+  }
+  const q=(document.getElementById('pagos-search')?.value||'').trim().toLowerCase();
+  const conFilter=document.getElementById('pagos-concepto-filter')?.value||'';
+  let filtered=[...payments];
+  if(q) filtered=filtered.filter(p=>{
+    const s=getS(p.studentId);
+    return s && (s.a+' '+s.n).toLowerCase().includes(q);
+  });
+  if(conFilter) filtered=filtered.filter(p=>p.conceptId===conFilter);
+  const sorted=filtered.sort((a,b)=>b.date.localeCompare(a.date));
+  const totalFiltrado=filtered.reduce((s,p)=>s+p.amount,0);
+  document.getElementById('pagos-count').textContent = (q||conFilter)
+    ? `${sorted.length} de ${payments.length} pagos · ${fmt(totalFiltrado)}`
+    : `${sorted.length} pagos registrados · ${fmt(totalInc())} total`;
   document.getElementById('pagos-body').innerHTML=sorted.length?sorted.map(p=>{
     const s=getS(p.studentId),c=getC(p.conceptId);
     // Si no se encuentra el alumno, mostrar ID para diagnóstico
@@ -1597,7 +1623,7 @@ function renderPagos(){
         </div>
       </td>
     </tr>`;
-  }).join(''):`<tr><td colspan="7"><div class="empty"><i class="ti ti-coin-off"></i>Sin pagos</div></td></tr>`;
+  }).join(''):`<tr><td colspan="7"><div class="empty"><i class="ti ti-coin-off"></i>${(q||conFilter)?'Sin resultados para ese filtro':'Sin pagos'}</div></td></tr>`;
 
   // Aviso si hay pagos huérfanos (sin alumno coincidente)
   const orphans=payments.filter(p=>!getS(p.studentId));
