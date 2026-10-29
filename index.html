@@ -662,6 +662,7 @@ input::placeholder{color:var(--t3)}
       <button class="itab on" onclick="showInfTab('resumen')"><i class="ti ti-chart-pie" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Resumen</button>
       <button class="itab" onclick="showInfTab('concepto')"><i class="ti ti-tags" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Concepto</button>
       <button class="itab" onclick="showInfTab('pendientes')"><i class="ti ti-alert-circle" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Pendientes</button>
+      <button class="itab" onclick="showInfTab('deudores')"><i class="ti ti-user-exclamation" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Deudores</button>
       <button class="itab" onclick="showInfTab('ranking')"><i class="ti ti-trophy" style="font-size:13px;vertical-align:-2px;margin-right:3px"></i>Ranking</button>
     </div>
     <div class="print-header" id="print-header-title" style="font-size:13px;font-weight:700;margin-bottom:6px;padding-bottom:4px;border-bottom:1.5px solid #333">
@@ -670,6 +671,7 @@ input::placeholder{color:var(--t3)}
     <div id="inf-resumen" class="inf-panel print-active"></div>
     <div id="inf-concepto" class="inf-panel" style="display:none"></div>
     <div id="inf-pendientes" class="inf-panel" style="display:none"></div>
+    <div id="inf-deudores" class="inf-panel" style="display:none"></div>
     <div id="inf-ranking" class="inf-panel" style="display:none"></div>
   </div>
 
@@ -1771,7 +1773,7 @@ let currentInfTab='resumen';
 function showInfTab(tab){
   currentInfTab=tab;
   document.querySelectorAll('.itab').forEach((el,i)=>{
-    el.classList.toggle('on',['resumen','concepto','pendientes','ranking'][i]===tab);
+    el.classList.toggle('on',['resumen','concepto','pendientes','deudores','ranking'][i]===tab);
   });
   // Quitar print-active de todos y ponerlo solo al activo
   document.querySelectorAll('.inf-panel').forEach(el=>{el.style.display='none';el.classList.remove('print-active');});
@@ -1781,18 +1783,19 @@ function showInfTab(tab){
   if(tab==='resumen')renderInfResumen();
   else if(tab==='concepto')renderInfConcepto();
   else if(tab==='pendientes')renderInfPendientes();
+  else if(tab==='deudores')renderInfDeudores();
   else if(tab==='ranking')renderInfRanking();
 }
 
 function imprimirInforme(){
-  const nombres={resumen:'Resumen General',concepto:'Por Concepto',pendientes:'Pagos Pendientes',ranking:'Ranking de Pagos'};
+  const nombres={resumen:'Resumen General',concepto:'Por Concepto',pendientes:'Pagos Pendientes',deudores:'Deudores',ranking:'Ranking de Pagos'};
   document.getElementById('print-header-title').innerHTML=
     `🎓 Tesorería 2° Básico A · 2026 &nbsp;·&nbsp; <span style="color:#1D9E75">${nombres[currentInfTab]||currentInfTab}</span>
      &nbsp;&nbsp;<span style="font-size:9px;font-weight:400;color:#777">· ${new Date().toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'})}</span>`;
   window.print();
 }
 
-const NOMBRES_INFORME={resumen:'Resumen General',concepto:'Por Concepto',pendientes:'Pagos Pendientes',ranking:'Ranking de Pagos'};
+const NOMBRES_INFORME={resumen:'Resumen General',concepto:'Por Concepto',pendientes:'Pagos Pendientes',deudores:'Deudores',ranking:'Ranking de Pagos'};
 async function descargarInformeJPG(){
   if(typeof html2canvas==='undefined'){toast('No se pudo cargar el generador de imágenes (revisa tu conexión)','err');return;}
   const panel=document.querySelector('.inf-panel.print-active');
@@ -2027,6 +2030,82 @@ function renderInfPendientes(){
     <p style="font-size:16px;font-weight:700;color:var(--teal)">¡Sin pendientes!</p>
     <p style="font-size:13px;color:var(--t2);margin-top:4px">Todos al día.</p>
   </div>`;
+}
+
+// Informe consolidado de deudores: por alumno, cuanto debe sumando TODOS
+// los conceptos (cuotas mensuales pendientes + pagos unicos sin pagar).
+// Los conceptos "free" no entran porque no tienen monto fijo exigible.
+function deudaPorAlumno(sid){
+  let total=0;const detalle=[];
+  concepts.forEach(c=>{
+    if(c.type==='monthly'){
+      const paid=new Set(payments.filter(p=>p.conceptId===c.id&&p.studentId===sid).map(p=>p.month));
+      const missing=MN.filter(m=>!paid.has(m));
+      if(missing.length){
+        const monto=missing.length*(c.amount||0);
+        total+=monto;
+        detalle.push({concepto:c.name,texto:`${missing.length} mes${missing.length>1?'es':''} (${missing.map(m=>MONTHS[m]).join(', ')})`,monto});
+      }
+    } else if(c.type==='once'){
+      const pagado=payments.some(p=>p.conceptId===c.id&&p.studentId===sid);
+      if(!pagado&&c.amount>0){
+        total+=c.amount;
+        detalle.push({concepto:c.name,texto:'Sin pagar',monto:c.amount});
+      }
+    }
+  });
+  return{total,detalle};
+}
+function renderInfDeudores(){
+  const el=document.getElementById('inf-deudores');
+  const rows=students.map(s=>({s,...deudaPorAlumno(s.id)})).filter(r=>r.total>0).sort((a,b)=>b.total-a.total);
+  const granTotal=rows.reduce((t,r)=>t+r.total,0);
+  if(!rows.length){
+    el.innerHTML=`<div class="card cp" style="text-align:center;padding:40px">
+      <i class="ti ti-circle-check" style="font-size:48px;color:var(--teal);display:block;margin-bottom:12px;opacity:.7"></i>
+      <p style="font-size:16px;font-weight:700;color:var(--teal)">¡Sin deudores!</p>
+      <p style="font-size:13px;color:var(--t2);margin-top:4px">Todos los alumnos están al día en todos los conceptos.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML=`<div class="card cp" style="margin-bottom:14px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div><div style="font-size:11px;color:var(--t2)">ALUMNOS CON DEUDA</div><div style="font-size:22px;font-weight:700;color:var(--amber)">${rows.length}<span style="font-size:13px;color:var(--t3);font-weight:500">/${students.length}</span></div></div>
+        <div><div style="font-size:11px;color:var(--t2)">DEUDA TOTAL</div><div style="font-size:22px;font-weight:700;color:var(--amber)">${fmt(granTotal)}</div></div>
+      </div>
+      <button class="btn sm no-print" onclick="copyWADeudores()"><i class="ti ti-brand-whatsapp" style="color:#25D366"></i>Copiar para WhatsApp</button>
+    </div>
+  </div>
+  <div class="card" style="overflow:hidden"><div class="mwrap">
+  <table class="tbl">
+    <thead><tr><th>Alumno</th><th>Conceptos que debe</th><th style="text-align:right">Total adeudado</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td style="vertical-align:top"><span style="font-weight:500">${r.s.a}</span>, <span style="color:var(--t2)">${r.s.n}</span></td>
+      <td>${r.detalle.map(d=>`<div style="margin-bottom:4px"><span class="badge b-pend" style="margin-right:6px">${d.concepto}</span><span style="font-size:11px;color:var(--t2)">${d.texto} · ${fmt(d.monto)}</span></div>`).join('')}</td>
+      <td style="text-align:right;font-weight:700;color:var(--amber);vertical-align:top">${fmt(r.total)}</td>
+    </tr>`).join('')}
+    <tr><td style="font-weight:700">TOTAL</td><td></td><td style="text-align:right;font-weight:700;color:var(--amber)">${fmt(granTotal)}</td></tr>
+    </tbody>
+  </table></div></div>`;
+}
+function copyWADeudores(){
+  const rows=students.map(s=>({s,...deudaPorAlumno(s.id)})).filter(r=>r.total>0).sort((a,b)=>b.total-a.total);
+  const granTotal=rows.reduce((t,r)=>t+r.total,0);
+  const now=new Date();const dateStr=now.toLocaleDateString('es-CL',{day:'numeric',month:'long'});
+  let text=`*🎓 TESORERÍA 2°B A · 2026*\n*Informe de Deudores* · ${dateStr}\n`;
+  if(rows.length){
+    text+=`\n⏳ *Alumnos con deuda (${rows.length}):*\n`;
+    text+=rows.map(r=>`• ${r.s.a}, ${r.s.n} — ${fmt(r.total)}\n   ${r.detalle.map(d=>`${d.concepto}: ${d.texto}`).join(' · ')}`).join('\n');
+    text+=`\n\n💰 Deuda total: *${fmt(granTotal)}*`;
+  } else {
+    text+='\n✅ *¡Todos los alumnos están al día!*';
+  }
+  navigator.clipboard.writeText(text)
+    .then(()=>toast('¡Mensaje copiado! Pégalo en WhatsApp ✓','ok'))
+    .catch(()=>{
+      toast('No se pudo copiar','err');
+    });
 }
 
 function renderInfRanking(){
